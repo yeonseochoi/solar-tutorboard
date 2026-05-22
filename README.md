@@ -4,8 +4,10 @@
 > - **Track 1. [업스테이지] SOLAR PRO3를 활용한 Agent 개발**  
 > - **Team 4**
 
-Solar Tutorboard는 과외 선생님의 수업 메모, 결제 상태, 일정 요청을 AI Agent가 분석해 학부모용 리포트와 안내 메시지로 자동 생성하는 서비스입니다.  
-선생님과 학부모가 수업 현황, 결제 알림, 일정 조정을 한 화면에서 관리할 수 있도록 돕는 **AI 기반 과외 운영 대시보드**입니다.
+Solar Tutorboard는 **업스테이지 Solar Pro3 모델**을 핵심 LLM 엔진으로 사용하는 AI Agent 서비스입니다. 과외 선생님의 수업 메모, 결제 상태, 일정 요청을 Solar Pro3 기반 Agent가 분석해 학부모용 리포트와 안내 메시지로 자동 생성합니다.  
+선생님과 학부모가 수업 현황, 결제 알림, 일정 조정을 한 화면에서 관리할 수 있도록 돕는 **Solar Pro3 기반 과외 운영 대시보드**입니다.
+
+> 이 프로젝트의 Agent들은 Solar Pro3가 JSON schema에 맞춰 구조화된 결과를 생성하도록 설계되어 있으며, 프론트엔드는 Python Agent API를 통해 Solar Pro3의 결과를 서비스 화면과 Supabase DB에 연결합니다.
 
 ---
 
@@ -16,7 +18,7 @@ Solar Tutorboard는 과외 선생님의 수업 메모, 결제 상태, 일정 요
 - 📅 학생/학부모의 일정 변경 요청을 AI Agent가 승인/거절 판단
 - 📬 생성된 리포트, 결제 안내, 일정 안내를 `message_queue` 형태로 저장
 - 🧑‍🏫 선생님용 대시보드와 👨‍👩‍👧 학생/학부모용 대시보드 제공
-- 🤖 Solar Pro3 API와 로컬 mock Agent를 모두 지원
+- 🤖 업스테이지 Solar Pro3 API 기반 Agent 실행 지원
 
 ---
 
@@ -77,7 +79,7 @@ agent_api.py
   ↓
 ai_tutor_agents/*
   ↓
-Solar Pro3 API 또는 로컬 mock Agent
+Upstage Solar Pro3 API
   ↓
 JSON 응답
   ↓
@@ -85,6 +87,8 @@ Supabase tables
   ↓
 대시보드, 리포트, 메시지 큐 화면에 표시
 ```
+
+개발/시연 편의를 위해 Solar API 없이도 동작하는 로컬 mock 로직이 일부 포함되어 있지만, 대회 제출 기준의 실제 Agent 실행은 `python agent_api.py --solar`를 통해 **Solar Pro3 API**를 사용합니다.
 
 모든 Agent는 아래 공통 JSON 형식으로 응답합니다.
 
@@ -120,6 +124,24 @@ message_type: lesson_report, payment_reminder, schedule_coordination
 ---
 
 ## 🤖 Agent 구성
+
+### Solar Pro3 Agent 실행 방식
+
+각 Agent는 같은 구조로 동작합니다.
+
+```text
+입력 JSON
+  ↓
+Agent별 system prompt + output schema
+  ↓
+Upstage Solar Pro3
+  ↓
+JSON-only 응답
+  ↓
+프론트 UI와 Supabase DB에 반영
+```
+
+Solar Pro3가 자유 서술형 답변을 하는 것이 아니라, `schemas.py`에 정의된 JSON schema를 기준으로 서비스가 바로 사용할 수 있는 구조화 결과를 생성하는 것이 핵심입니다.
 
 ### 1. Tutor Profile Agent
 
@@ -246,6 +268,45 @@ message_type: lesson_report, payment_reminder, schedule_coordination
 
 ---
 
+## 🧩 주요 파일 역할
+
+### Python
+
+- `demo.py`: 터미널에서 전체 Agent 파이프라인을 실행하는 데모 파일
+- `agent_api.py`: 프론트엔드가 호출하는 로컬 Python Agent API 서버
+- `tests.py`: Agent별 기본 테스트 케이스
+- `ai_tutor_agents/agent_utils.py`: 공통 응답 형식 생성 유틸
+- `ai_tutor_agents/agents.py`: 각 Agent 함수를 한 곳에서 export하는 진입점
+- `ai_tutor_agents/env.py`: `.env` 파일 로더
+- `ai_tutor_agents/llm.py`: 업스테이지 Solar Pro3 API 호출 클라이언트
+- `ai_tutor_agents/prompts.py`: Agent별 system prompt와 output schema 정의
+- `ai_tutor_agents/schemas.py`: JSON schema와 enum 정의
+- `ai_tutor_agents/pipeline.py`: Agent들을 순서대로 연결하는 파이프라인
+
+### Frontend
+
+- `frontend/src/lib/agent.ts`: 프론트에서 Python Agent API를 호출하는 함수 모음
+- `frontend/src/lib/supabase.ts`: Supabase client와 데모 ID 정의
+- `frontend/src/lib/types.ts`: 공통 타입 정의
+- `frontend/src/routes/teacher.index.tsx`: 선생님 대시보드
+- `frontend/src/routes/teacher.lesson-report.tsx`: 수업 리포트 생성 화면
+- `frontend/src/routes/teacher.payments.tsx`: 결제 관리 화면
+- `frontend/src/routes/teacher.schedule.tsx`: 일정 관리 및 AI 일정 검토 화면
+- `frontend/src/routes/teacher.messages.tsx`: 메시지 큐 확인 화면
+- `frontend/src/routes/parent.index.tsx`: 학부모 대시보드
+- `frontend/src/routes/parent.reports.tsx`: 학부모 리포트 확인 화면
+- `frontend/src/routes/parent.schedule.tsx`: 학부모 일정 변경 요청 화면
+
+### Supabase
+
+- `supabase/schema.sql`: DB 테이블과 인덱스 생성
+- `supabase/seed.sql`: 시연용 seed 데이터 삽입
+- `supabase/demo_access.sql`: 데모용 접근 권한 설정
+- `supabase/verify.sql`: seed 데이터 검증 쿼리
+- `supabase/migrate_message_status.sql`: 기존 DB 제약조건과 컬럼명을 최신 구조로 보정
+
+---
+
 ## 🗄️ DB 테이블
 
 - `tutors`: 과외 선생님 정보
@@ -259,44 +320,38 @@ message_type: lesson_report, payment_reminder, schedule_coordination
 
 ## 🚀 실행 방법
 
-### 1. Python Agent만 실행
+이 프로젝트는 **Python Agent API 서버**와 **Frontend 개발 서버** 두 개를 켜서 실행합니다.
 
-Solar API 없이 로컬 mock 로직으로 실행합니다.
+### 1. 환경변수 설정
 
-```powershell
-python demo.py
-```
-
-Solar API를 사용하려면 `.env` 파일을 만든 뒤 실행합니다.
-
-```powershell
-Copy-Item .env.example .env
-```
-
-`.env` 예시:
+루트 경로에 `.env` 파일을 만들고 Solar Pro3 API 정보를 입력합니다.
 
 ```env
 SOLAR_API_KEY=your_solar_api_key_here
 SOLAR_MODEL=solar-pro3
 SOLAR_BASE_URL=https://api.upstage.ai/v1/chat/completions
+
+AGENT_API_HOST=127.0.0.1
+AGENT_API_PORT=8000
+AGENT_USE_SOLAR=1
+AGENT_CORS_ORIGIN=*
 ```
 
-```powershell
-python demo.py --solar
+`python agent_api.py --solar`로 실행하면 Solar Pro3 사용이 명시적으로 켜집니다. `AGENT_USE_SOLAR=1`은 `--solar` 옵션 없이 실행할 때도 Solar Pro3를 기본 사용하도록 하는 설정입니다.
+
+`frontend/.env.local` 파일에는 프론트엔드가 호출할 Agent API 주소를 입력합니다.
+
+```env
+VITE_AGENT_API_URL=http://127.0.0.1:8000
+VITE_AGENT_USE_MOCK=false
 ```
 
 ### 2. Python Agent API 서버 실행
 
-프론트엔드와 연결하려면 Python API 서버를 먼저 켭니다.
+첫 번째 터미널에서 실행합니다.
 
 ```powershell
 python agent_api.py --solar
-```
-
-Solar 없이 로컬 mock Agent로 실행하려면:
-
-```powershell
-python agent_api.py
 ```
 
 정상 실행 예시:
@@ -307,25 +362,12 @@ Agent API running on http://127.0.0.1:8000 (solar)
 
 ### 3. Frontend 실행
 
-새 터미널에서 실행합니다.
+두 번째 터미널에서 실행합니다.
 
 ```powershell
 cd frontend
 npm install
 npm run dev
-```
-
-`frontend/.env.local` 예시:
-
-```env
-VITE_AGENT_API_URL=http://127.0.0.1:8000
-VITE_AGENT_USE_MOCK=false
-```
-
-Agent API 없이 프론트 화면만 확인하려면:
-
-```env
-VITE_AGENT_USE_MOCK=true
 ```
 
 ### 4. Supabase 세팅
