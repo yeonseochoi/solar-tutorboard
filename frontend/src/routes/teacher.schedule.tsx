@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase, DEMO_TUTOR_ID, DEMO_STUDENT_ID } from "@/lib/supabase";
 import { AppLayout } from "@/components/AppLayout";
 import { LoadingState, EmptyState, ErrorState } from "@/components/Section";
@@ -51,6 +51,8 @@ function SchedulePage() {
   });
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [agentBusy, setAgentBusy] = useState("");
+  const addSlotSectionRef = useRef<HTMLElement | null>(null);
+  const newDateInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["teacher", "schedules"],
@@ -127,6 +129,14 @@ function SchedulePage() {
     month.setHours(0, 0, 0, 0);
     setMonthCursor(month);
     selectDate(key);
+  };
+
+  const focusAddSlotForm = () => {
+    setNewDate(selectedDate);
+    setStartTime("20:00");
+    setEndTime("21:00");
+    addSlotSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => newDateInputRef.current?.focus(), 250);
   };
 
   const addSlot = async () => {
@@ -249,11 +259,7 @@ function SchedulePage() {
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <Button
           className="bg-[oklch(0.53_0.22_275)] shadow-sm hover:bg-[oklch(0.48_0.22_275)]"
-          onClick={() => {
-            setNewDate(selectedDate);
-            setStartTime("20:00");
-            setEndTime("21:00");
-          }}
+          onClick={focusAddSlotForm}
         >
           <Plus className="h-4 w-4" /> 가능 시간 추가
         </Button>
@@ -345,7 +351,7 @@ function SchedulePage() {
             )}
           </section>
 
-          <section className="rounded-lg border bg-card p-5 shadow-sm">
+          <section ref={addSlotSectionRef} className="rounded-lg border bg-card p-5 shadow-sm">
             <h2 className="mb-4 text-base font-semibold">새 가능 시간 등록</h2>
             <div className="space-y-4">
               <div>
@@ -370,6 +376,7 @@ function SchedulePage() {
                   <div className="relative">
                     <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
+                      ref={newDateInputRef}
                       className="pl-9"
                       type="date"
                       value={newDate}
