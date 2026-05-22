@@ -219,8 +219,7 @@ function SchedulePage() {
       const message = queue.result.messages[0];
       if (!message) throw new Error("message_queue Agent가 메시지를 반환하지 않았습니다.");
 
-      const { error: merr } = await supabase.from("message_queue").insert(message);
-      if (merr) throw merr;
+      await insertScheduleMessage(message);
 
       toast.success(
         result.result.recommended_status === "approved"
@@ -232,7 +231,7 @@ function SchedulePage() {
       qc.invalidateQueries({ queryKey: ["teacher"] });
     } catch (e) {
       toast.error("AI 일정 검토 실패", {
-        description: e instanceof Error ? e.message : String(e),
+        description: getErrorMessage(e),
       });
     } finally {
       setAgentBusy("");
@@ -676,6 +675,52 @@ function toScheduleTimestamp(value: string) {
   if (value.includes("T")) return value;
   const parsed = new Date(value.replace(" ", "T"));
   return isNaN(parsed.getTime()) ? value : parsed.toISOString();
+}
+
+async function insertScheduleMessage(message: Record<string, unknown>) {
+  const { error } = await supabase.from("message_queue").insert(message);
+  if (!error) return;
+
+  const messageText = getErrorMessage(error);
+  const shouldRetryWithLegacyStatus =
+    messageText.includes("message_status") || messageText.includes("schema cache");
+
+  if (shouldRetryWithLegacyStatus && "message_status" in message) {
+    const legacyMessage = { ...message, status: message.message_status };
+    delete legacyMessage.message_status;
+
+    const { error: legacyError } = await supabase.from("message_queue").insert(legacyMessage);
+    if (!legacyError) return;
+    throw new Error(withSupabaseHint(getErrorMessage(legacyError)));
+  }
+
+  throw new Error(withSupabaseHint(messageText));
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const parts = [record.message, record.details, record.hint, record.code]
+      .filter(Boolean)
+      .map(String);
+    if (parts.length > 0) return parts.join(" ");
+    return JSON.stringify(record);
+  }
+  return String(error);
+}
+
+function withSupabaseHint(message: string) {
+  if (
+    message.includes("schedule_coordination") ||
+    message.includes("message_type") ||
+    message.includes("message_status") ||
+    message.includes("constraint")
+  ) {
+    return `${message} / Supabase SQL Editor에서 supabase/migrate_message_status.sql 실행이 필요할 수 있습니다.`;
+  }
+  return message;
 }
 
 function formatKoreanDate(dateKey: string) {
