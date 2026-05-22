@@ -106,3 +106,61 @@ SOLAR_BASE_URL=https://api.upstage.ai/v1/chat/completions
 python demo.py --solar
 ```
 
+PowerShell에서 환경변수를 직접 넣어도 됩니다.
+
+```powershell
+$env:SOLAR_API_KEY="your_api_key"
+python demo.py --solar
+```
+
+## Demo Seed Data
+
+웹 화면에서 바로 쓸 수 있는 mock 데이터:
+
+```text
+data/tutorboard_seed.json
+```
+
+Supabase에 데모 테이블과 데이터를 넣을 때는 SQL Editor에서 아래 순서로 실행합니다.
+
+```text
+supabase/schema.sql
+supabase/seed.sql
+supabase/demo_access.sql
+```
+
+검증 쿼리:
+
+```text
+supabase/verify.sql
+```
+
+Supabase 연결 정보와 프론트 조회 예시는 아래 문서에 정리되어 있습니다.
+
+```text
+docs/supabase_handoff.md
+```
+
+## Files
+
+- `ai_tutor_agents/prompts.py`: Agent별 system prompt와 output schema
+- `ai_tutor_agents/schemas.py`: 고정 JSON schema 이름
+- `ai_tutor_agents/agents.py`: 각 Agent 호출 함수
+- `ai_tutor_agents/llm.py`: Solar API 호출 코드
+- `ai_tutor_agents/env.py`: `.env` 파일 로더
+- `ai_tutor_agents/pipeline.py`: 전체 Agent 연결 흐름
+- `demo.py`: 시연용 입력 데이터
+- `tests.py`: Agent별 테스트 케이스
+- `data/tutorboard_seed.json`: 웹 UI용 데모 seed 데이터
+- `supabase/schema.sql`: Supabase 테이블 생성 SQL
+- `supabase/seed.sql`: Supabase 데모 데이터 insert SQL
+- `supabase/demo_access.sql`: 데모 프론트엔드용 anon/authenticated 접근 권한 SQL
+- `supabase/verify.sql`: Supabase seed 검증 SQL
+- `docs/supabase_handoff.md`: 프론트/Agent 팀 전달용 DB 연결 가이드
+
+## Fixed JSON Names
+
+- `agent_profile`
+- `lesson_report`
+- `payment_reminder`
+- `message_queue`
