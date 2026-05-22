@@ -34,14 +34,13 @@ supabase/verify.sql
 Expected demo verification:
 
 - `tutors`: 1 row
-- `students`: 1 row
-- `lesson_reports`: 1 row
-- `payments`: 1 row
-- `message_queue`: 2 rows
-- `schedules`: 1 row
-- Demo student: `김서윤`
-- Payment status: `unpaid`
-- Message count: `2`
+- `students`: 3 rows
+- `lesson_reports`: 3 rows
+- `payments`: 3 rows
+- `message_queue`: 5 rows
+- `schedules`: 3 rows
+- Demo students: `김서윤`, `박민준`, `이하린`
+- Unpaid students: `김서윤`, `이하린`
 
 ## Tables
 
@@ -102,7 +101,12 @@ The current Agent output uses `message_status`; store that value in the DB colum
 For MVP demos, use:
 
 - `tutor_id`: `11111111-1111-1111-1111-111111111111`
-- `student_id`: `22222222-2222-2222-2222-222222222222`
+
+Demo student IDs:
+
+- `김서윤`: `22222222-2222-2222-2222-222222222222`
+- `박민준`: `22222222-2222-2222-2222-222222222223`
+- `이하린`: `22222222-2222-2222-2222-222222222224`
 
 ## Security Note
 

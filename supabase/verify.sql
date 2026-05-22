@@ -15,5 +15,4 @@ from public.students s
 join public.lesson_reports lr on lr.student_id = s.id
 join public.payments p on p.student_id = s.id
 left join public.message_queue mq on mq.student_id = s.id
-where s.id = '22222222-2222-2222-2222-222222222222'
 group by s.name, lr.progress, p.payment_status, p.amount;
