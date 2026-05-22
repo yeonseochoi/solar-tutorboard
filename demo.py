@@ -9,23 +9,25 @@ from ai_tutor_agents.pipeline import run_tutor_agent_pipeline
 
 
 DEMO_INPUT = {
-    "tutor_profile_input": {
-        "subject": "고등 수학",
-        "teaching_style": "꼼꼼하게 개념을 잡아주는 스타일",
-        "payment_policy": "월 4회 선결제",
+    "student": {
+        "student_id": "S001",
+        "student_name": "김서윤",
+        "grade": "고1",
+        "subject": "수학",
+        "parent_name": "김서윤 학부모님",
+    },
+    "teacher": {
+        "teacher_id": "T001",
+        "teacher_name": "우은비",
+        "teaching_style": "꼼꼼한 개념 설명형",
         "parent_tone": "정중하지만 부담스럽지 않게",
     },
-    "lesson_report_input": {
-        "student": {
-            "name": "김서윤",
-            "grade": "고1",
-            "subject": "수학",
-        },
-        "lesson_memo": "오늘 지수함수 그래프 이동 수업. 로그 개념 헷갈려함. 숙제 15문제 중 9문제 완료. 계산 실수 많음.",
+    "lesson_log": {
+        "lesson_id": "L001",
+        "lesson_date": "2026-05-23",
+        "raw_memo": "오늘 지수함수 그래프 이동 수업. 로그 개념 헷갈려함. 숙제 15문제 중 9문제 완료. 계산 실수 많음.",
     },
-    "payment_reminder_input": {
-        "student_name": "김서윤",
-        "parent_name": "김서윤 학부모님",
+    "payment": {
         "payment_status": "unpaid",
         "payment_due_date": "2026-05-24",
         "amount": 320000,
@@ -50,4 +52,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
