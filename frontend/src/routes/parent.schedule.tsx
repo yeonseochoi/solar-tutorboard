@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { supabase, DEMO_TUTOR_ID, DEMO_STUDENT_ID } from "@/lib/supabase";
+import { supabase, DEMO_TUTOR_ID } from "@/lib/supabase";
+import { getParentStudentId } from "@/lib/parent-session";
 import { AppLayout } from "@/components/AppLayout";
 import { Section, LoadingState, EmptyState, ErrorState } from "@/components/Section";
 import { Badge, statusTone, statusLabel } from "@/components/Badge";
@@ -22,14 +23,15 @@ function ScheduleRequest() {
   const [selected, setSelected] = useState<string>("");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const studentId = getParentStudentId();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["parent", "schedules"],
+    queryKey: ["parent", "schedules", studentId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("schedules")
         .select("*")
-        .eq("student_id", DEMO_STUDENT_ID)
+        .eq("student_id", studentId)
         .order("available_time", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Schedule[];
@@ -61,8 +63,8 @@ function ScheduleRequest() {
       if (reason.trim()) {
         await supabase.from("message_queue").insert({
           tutor_id: DEMO_TUTOR_ID,
-          student_id: DEMO_STUDENT_ID,
-          message_type: "lesson_report",
+          student_id: studentId,
+          message_type: "schedule_coordination",
           channel: "email_mock",
           message_status: "pending",
           message_body: `[일정 요청 사유] ${reason}`,

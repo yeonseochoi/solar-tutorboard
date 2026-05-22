@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase, DEMO_TUTOR_ID } from "@/lib/supabase";
 import { AppLayout } from "@/components/AppLayout";
 import { Section, LoadingState, EmptyState, ErrorState } from "@/components/Section";
@@ -8,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { formatDate, formatDateTime } from "@/lib/types";
 import type { Student, Payment, LessonReport, MessageQueue, Schedule } from "@/lib/types";
 import { build_message_queue_mock, generate_payment_reminder } from "@/lib/agent";
+import { send_message_email } from "@/lib/email";
 import { toast } from "sonner";
 import {
   CalendarDays,
-  Check,
   Clock3,
   Eye,
   FileText,
@@ -29,6 +30,7 @@ function StudentDetail() {
   const { studentId } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["teacher", "student", studentId],
@@ -76,19 +78,22 @@ function StudentDetail() {
   );
   const pendingMessages = data?.msgs.filter((m) => m.message_status === "pending") ?? [];
 
-  const markSent = async (id: string) => {
+  const sendEmail = async (id: string) => {
     try {
-      const { error: uerr } = await supabase
-        .from("message_queue")
-        .update({ message_status: "sent" })
-        .eq("id", id);
-      if (uerr) throw uerr;
-      toast.success("발송 완료 처리");
+      setSendingId(id);
+      const result = await send_message_email(id);
+      toast.success("메일 발송 완료", {
+        description: result.test_mode
+          ? "테스트 수신자 이메일로 전송했습니다."
+          : "Gmail 발송 계정에서 학부모 이메일로 전송했습니다.",
+      });
       qc.invalidateQueries({ queryKey: ["teacher"] });
     } catch (e) {
-      toast.error("상태 변경 실패", {
+      toast.error("메일 발송 실패", {
         description: e instanceof Error ? e.message : String(e),
       });
+    } finally {
+      setSendingId(null);
     }
   };
 
@@ -325,8 +330,14 @@ function StudentDetail() {
                             </Badge>
                           </div>
                           {m.message_status === "pending" && (
-                            <Button size="sm" variant="outline" onClick={() => markSent(m.id)}>
-                              <Check className="h-3.5 w-3.5" /> 발송 완료 처리
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={sendingId === m.id}
+                              onClick={() => sendEmail(m.id)}
+                            >
+                              <Mail className="h-3.5 w-3.5" />
+                              {sendingId === m.id ? "발송 중" : "메일 발송"}
                             </Button>
                           )}
                         </div>

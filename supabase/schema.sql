@@ -21,6 +21,18 @@ create table if not exists public.students (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.parent_invites (
+  id uuid primary key default gen_random_uuid(),
+  tutor_id uuid not null references public.tutors(id) on delete cascade,
+  student_id uuid not null references public.students(id) on delete cascade,
+  email text not null,
+  token text not null unique,
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'expired')),
+  expires_at timestamptz not null,
+  accepted_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.lesson_reports (
   id uuid primary key default gen_random_uuid(),
   tutor_id uuid not null references public.tutors(id) on delete cascade,
@@ -68,6 +80,8 @@ create table if not exists public.schedules (
 );
 
 create index if not exists students_tutor_id_idx on public.students(tutor_id);
+create index if not exists parent_invites_token_idx on public.parent_invites(token);
+create index if not exists parent_invites_student_id_status_idx on public.parent_invites(student_id, status);
 create index if not exists lesson_reports_student_id_created_at_idx on public.lesson_reports(student_id, created_at desc);
 create index if not exists payments_student_id_due_date_idx on public.payments(student_id, payment_due_date);
 create index if not exists message_queue_student_id_status_idx on public.message_queue(student_id, message_status);

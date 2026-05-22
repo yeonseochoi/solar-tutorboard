@@ -9,6 +9,20 @@ export type Student = {
   created_at: string;
 };
 
+export type ParentInviteStatus = "pending" | "accepted" | "expired";
+
+export type ParentInvite = {
+  id: string;
+  tutor_id: string;
+  student_id: string;
+  email: string;
+  token: string;
+  status: ParentInviteStatus;
+  expires_at: string;
+  accepted_at: string | null;
+  created_at: string;
+};
+
 export type LessonReport = {
   id: string;
   tutor_id: string;

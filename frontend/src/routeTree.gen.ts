@@ -21,6 +21,7 @@ import { Route as TeacherMessagesRouteImport } from './routes/teacher.messages'
 import { Route as TeacherLessonReportRouteImport } from './routes/teacher.lesson-report'
 import { Route as ParentScheduleRouteImport } from './routes/parent.schedule'
 import { Route as ParentReportsRouteImport } from './routes/parent.reports'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as TeacherStudentsIndexRouteImport } from './routes/teacher.students.index'
 import { Route as TeacherStudentsStudentIdRouteImport } from './routes/teacher.students.$studentId'
 
@@ -84,6 +85,11 @@ const ParentReportsRoute = ParentReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => ParentRoute,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeacherStudentsIndexRoute = TeacherStudentsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/parent': typeof ParentRouteWithChildren
   '/teacher': typeof TeacherRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
   '/parent/reports': typeof ParentReportsRoute
   '/parent/schedule': typeof ParentScheduleRoute
   '/teacher/lesson-report': typeof TeacherLessonReportRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/parent/reports': typeof ParentReportsRoute
   '/parent/schedule': typeof ParentScheduleRoute
   '/teacher/lesson-report': typeof TeacherLessonReportRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/parent': typeof ParentRouteWithChildren
   '/teacher': typeof TeacherRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
   '/parent/reports': typeof ParentReportsRoute
   '/parent/schedule': typeof ParentScheduleRoute
   '/teacher/lesson-report': typeof TeacherLessonReportRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/'
     | '/parent'
     | '/teacher'
+    | '/invite/$token'
     | '/parent/reports'
     | '/parent/schedule'
     | '/teacher/lesson-report'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/invite/$token'
     | '/parent/reports'
     | '/parent/schedule'
     | '/teacher/lesson-report'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/'
     | '/parent'
     | '/teacher'
+    | '/invite/$token'
     | '/parent/reports'
     | '/parent/schedule'
     | '/teacher/lesson-report'
@@ -194,6 +206,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ParentRoute: typeof ParentRouteWithChildren
   TeacherRoute: typeof TeacherRouteWithChildren
+  InviteTokenRoute: typeof InviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -282,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentReportsRouteImport
       parentRoute: typeof ParentRoute
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/teacher/students/': {
       id: '/teacher/students/'
       path: '/'
@@ -353,6 +373,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ParentRoute: ParentRouteWithChildren,
   TeacherRoute: TeacherRouteWithChildren,
+  InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

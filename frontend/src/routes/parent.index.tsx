@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase, DEMO_STUDENT_ID } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+import { getParentStudentId } from "@/lib/parent-session";
 import { AppLayout } from "@/components/AppLayout";
 import { LoadingState, EmptyState, ErrorState } from "@/components/Section";
 import { Badge, statusLabel } from "@/components/Badge";
@@ -25,31 +26,32 @@ export const Route = createFileRoute("/parent/")({
 });
 
 function ParentDashboard() {
+  const studentId = getParentStudentId();
   const { data, isLoading, error } = useQuery({
-    queryKey: ["parent", "dashboard"],
+    queryKey: ["parent", "dashboard", studentId],
     queryFn: async () => {
       const [student, payments, reports, msgs, schedules] = await Promise.all([
-        supabase.from("students").select("*").eq("id", DEMO_STUDENT_ID).maybeSingle(),
+        supabase.from("students").select("*").eq("id", studentId).maybeSingle(),
         supabase
           .from("payments")
           .select("*")
-          .eq("student_id", DEMO_STUDENT_ID)
+          .eq("student_id", studentId)
           .order("created_at", { ascending: false }),
         supabase
           .from("lesson_reports")
           .select("*")
-          .eq("student_id", DEMO_STUDENT_ID)
+          .eq("student_id", studentId)
           .order("created_at", { ascending: false })
           .limit(3),
         supabase
           .from("message_queue")
           .select("*")
-          .eq("student_id", DEMO_STUDENT_ID)
+          .eq("student_id", studentId)
           .order("created_at", { ascending: false }),
         supabase
           .from("schedules")
           .select("*")
-          .eq("student_id", DEMO_STUDENT_ID)
+          .eq("student_id", studentId)
           .order("available_time", { ascending: true }),
       ]);
       const err = student.error || payments.error || reports.error || msgs.error || schedules.error;

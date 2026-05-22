@@ -1,6 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useRole } from "@/lib/role";
 import { DEMO_TUTOR } from "@/lib/supabase";
+import { clearParentSession, getParentAccountLabel } from "@/lib/parent-session";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -53,8 +54,10 @@ export function AppLayout({
   const navigate = useNavigate();
   const { setRole } = useRole();
   const [open, setOpen] = useState(false);
+  const accountLabel = variant === "teacher" ? DEMO_TUTOR.name : getParentAccountLabel();
 
   const handleLogout = () => {
+    if (variant === "parent") clearParentSession();
     setRole(null);
     navigate({ to: "/" });
   };
@@ -100,9 +103,7 @@ export function AppLayout({
       <div className="mt-auto shrink-0 space-y-2 border-t p-3">
         <div className="flex items-center gap-2 px-2 py-1.5 text-xs">
           <User className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-muted-foreground">
-            {variant === "teacher" ? DEMO_TUTOR.name : "김서윤 학부모님"}
-          </span>
+          <span className="text-muted-foreground">{accountLabel}</span>
         </div>
         <Button
           variant="ghost"

@@ -1,12 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase, DEMO_TUTOR_ID } from "@/lib/supabase";
+import { send_parent_invite } from "@/lib/email";
 import { AppLayout } from "@/components/AppLayout";
 import { Section, LoadingState, EmptyState, ErrorState } from "@/components/Section";
 import { Badge, statusTone, statusLabel } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -14,18 +24,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Student, Payment, LessonReport, MessageQueue, Schedule } from "@/lib/types";
+import type {
+  Student,
+  Payment,
+  LessonReport,
+  MessageQueue,
+  Schedule,
+  ParentInvite,
+} from "@/lib/types";
 import { formatDate, formatDateTime } from "@/lib/types";
-import { ChevronRight, Search, SlidersHorizontal, UserPlus } from "lucide-react";
+import { ChevronRight, Mail, Search, SlidersHorizontal, UserPlus } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/teacher/students/")({
   component: StudentsPage,
 });
 
+const emptyInviteForm = {
+  student_name: "",
+  grade: "",
+  subject: "",
+  parent_name: "",
+  parent_contact: "",
+};
+
 function StudentsPage() {
+  const qc = useQueryClient();
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("all");
   const [paymentStatus, setPaymentStatus] = useState("all");
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState(emptyInviteForm);
+  const [creatingInvite, setCreatingInvite] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["teacher", "students"],
@@ -91,13 +121,82 @@ function StudentsPage() {
       });
   }, [data, paymentStatus, query, subject]);
 
+  const updateInviteForm = (key: keyof typeof emptyInviteForm, value: string) => {
+    setInviteForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const createInvite = async () => {
+    const student_name = inviteForm.student_name.trim();
+    const grade = inviteForm.grade.trim();
+    const inviteSubject = inviteForm.subject.trim();
+    const parent_name = inviteForm.parent_name.trim();
+    const parent_contact = inviteForm.parent_contact.trim();
+
+    if (!student_name || !grade || !inviteSubject || !parent_name || !parent_contact) {
+      toast.error("학생 이름, 학년, 과목, 학부모 이름, 이메일을 모두 입력해 주세요");
+      return;
+    }
+    if (!parent_contact.includes("@")) {
+      toast.error("학부모 이메일 형식을 확인해 주세요");
+      return;
+    }
+
+    setCreatingInvite(true);
+    try {
+      const { data: student, error: studentError } = await supabase
+        .from("students")
+        .insert({
+          tutor_id: DEMO_TUTOR_ID,
+          name: student_name,
+          grade,
+          subject: inviteSubject,
+          parent_name,
+          parent_contact,
+        })
+        .select("*")
+        .single();
+      if (studentError) throw studentError;
+
+      const token = generateInviteToken();
+      const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: invite, error: inviteError } = await supabase
+        .from("parent_invites")
+        .insert({
+          tutor_id: DEMO_TUTOR_ID,
+          student_id: (student as Student).id,
+          email: parent_contact,
+          token,
+          status: "pending",
+          expires_at,
+        })
+        .select("*")
+        .single();
+      if (inviteError) throw inviteError;
+
+      await send_parent_invite((invite as ParentInvite).id);
+
+      toast.success("학생 초대 메일을 보냈습니다", {
+        description: `${parent_contact} 주소로 로그인 링크가 발송되었습니다.`,
+      });
+      setInviteForm({ ...emptyInviteForm });
+      setInviteOpen(false);
+      await qc.invalidateQueries({ queryKey: ["teacher"] });
+    } catch (e) {
+      toast.error("학생 초대 실패", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    } finally {
+      setCreatingInvite(false);
+    }
+  };
+
   return (
     <AppLayout variant="teacher" title="학생 관리" subtitle="학생별 수업, 결제, 메시지 상태">
       <Section
         title="학생 목록"
         description="학생을 클릭하면 상세 관리 화면으로 이동합니다."
         actions={
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" onClick={() => setInviteOpen(true)}>
             <UserPlus className="h-4 w-4" /> 학생 추가
           </Button>
         }
@@ -253,6 +352,91 @@ function StudentsPage() {
           </>
         )}
       </Section>
+
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>새 학생 초대</DialogTitle>
+            <DialogDescription>
+              학생 정보를 저장하고 학부모/학생용 로그인 링크를 이메일로 보냅니다.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="invite-student-name">학생 이름</Label>
+              <Input
+                id="invite-student-name"
+                placeholder="예: 최지우"
+                value={inviteForm.student_name}
+                onChange={(e) => updateInviteForm("student_name", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invite-grade">학년</Label>
+              <Input
+                id="invite-grade"
+                placeholder="예: 고1"
+                value={inviteForm.grade}
+                onChange={(e) => updateInviteForm("grade", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invite-subject">과목</Label>
+              <Input
+                id="invite-subject"
+                placeholder="예: 수학"
+                value={inviteForm.subject}
+                onChange={(e) => updateInviteForm("subject", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invite-parent-name">학부모 이름</Label>
+              <Input
+                id="invite-parent-name"
+                placeholder="예: 최지우 학부모님"
+                value={inviteForm.parent_name}
+                onChange={(e) => updateInviteForm("parent_name", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="invite-parent-contact">초대 이메일</Label>
+              <Input
+                id="invite-parent-contact"
+                type="email"
+                placeholder="parent@example.com"
+                value={inviteForm.parent_contact}
+                onChange={(e) => updateInviteForm("parent_contact", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-md border bg-muted/25 p-3 text-xs leading-relaxed text-muted-foreground">
+            메일의 초대 URL을 누르면 별도 비밀번호 없이 해당 학생의 학부모/학생 모드로 로그인됩니다.
+            초대 링크는 7일 뒤 만료됩니다.
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setInviteOpen(false)}
+              disabled={creatingInvite}
+            >
+              취소
+            </Button>
+            <Button onClick={createInvite} disabled={creatingInvite}>
+              <Mail className="h-4 w-4" />
+              {creatingInvite ? "초대 발송 중" : "초대 메일 보내기"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
+}
+
+function generateInviteToken() {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
