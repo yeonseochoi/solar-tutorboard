@@ -58,6 +58,30 @@ def test_payment_cases() -> None:
             "agent_profile": profile,
         }
     )
+    overdue = generate_payment_reminder(
+        {
+            "student_name": "박민준",
+            "parent_name": "박민준 학부모님",
+            "payment_status": "unpaid",
+            "payment_due_date": "2026-05-22",
+            "amount": 280000,
+            "class_count": 4,
+            "next_class": "2026-05-23 18:00",
+            "agent_profile": profile,
+        }
+    )
+    pending = generate_payment_reminder(
+        {
+            "student_name": "박민준",
+            "parent_name": "박민준 학부모님",
+            "payment_status": "pending",
+            "payment_due_date": "2026-05-24",
+            "amount": 280000,
+            "class_count": 4,
+            "next_class": "2026-05-24 18:00",
+            "agent_profile": profile,
+        }
+    )
     paid = generate_payment_reminder(
         {
             "student_name": "박민준",
@@ -71,7 +95,16 @@ def test_payment_cases() -> None:
         }
     )
     assert unpaid["should_send"] is True
+    assert unpaid["message_type"] == "payment_reminder"
+    assert unpaid["urgency"] == "normal"
+    assert "수업 자료" in unpaid["message_body"]
+    assert overdue["should_send"] is True
+    assert overdue["urgency"] == "high"
+    assert pending["should_send"] is True
+    assert pending["message_body"]
     assert paid["should_send"] is False
+    assert paid["urgency"] == "none"
+    assert paid["message_body"] == ""
 
 
 def test_message_queue() -> None:

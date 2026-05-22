@@ -110,6 +110,11 @@ def generate_payment_reminder(input_data: dict[str, Any], llm: LLMClient | None 
     next_class = input_data.get("next_class", "")
     due_date = input_data.get("payment_due_date", "")
     urgency = _payment_urgency(due_date)
+    opening = "수업 준비 차 안내드립니다"
+    if urgency == "high":
+        opening = "다음 수업 준비를 위해 확인 안내드립니다"
+    elif status == "pending":
+        opening = "결제 확인 상태를 함께 정리드리기 위해 안내드립니다"
 
     return {
         "should_send": True,
@@ -117,9 +122,9 @@ def generate_payment_reminder(input_data: dict[str, Any], llm: LLMClient | None 
         "urgency": urgency,
         "message_body": (
             f"안녕하세요, {parent_name}. {student_name} 학생의 다음 수업이 "
-            f"{next_class}에 예정되어 있어 수업 준비 차 안내드립니다. "
+            f"{next_class}에 예정되어 있어 {opening}. "
             f"이번 {class_count}회차 수업료는 {amount:,}원이며, 결제 예정일은 {due_date}입니다. "
-            "확인 가능하실 때 편하게 처리 부탁드립니다."
+            "확인 가능하실 때 편하게 말씀 주시면 수업 자료를 맞춰 준비해두겠습니다."
         ),
     }
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 
+from ai_tutor_agents.env import load_env
 from ai_tutor_agents.llm import SolarProClient
 from ai_tutor_agents.pipeline import run_tutor_agent_pipeline
 
@@ -36,6 +37,8 @@ DEMO_INPUT = {
 
 
 def main() -> None:
+    load_env()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--solar", action="store_true", help="Use Solar Pro API instead of local mock logic")
     args = parser.parse_args()
