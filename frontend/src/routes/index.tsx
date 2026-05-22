@@ -36,8 +36,7 @@ function RoleSelect() {
         .from("students")
         .select("*")
         .eq("tutor_id", DEMO_TUTOR_ID)
-        .order("created_at", { ascending: true })
-        .limit(3);
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Student[];
     },
@@ -132,7 +131,8 @@ function RoleSelect() {
                 </div>
                 <h2 className="mt-2 text-lg font-semibold">학생을 선택해 주세요</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  선택한 학생의 리포트, 결제 안내, 일정 요청 화면으로 이동합니다.
+                  등록된 전체 학생 중 선택한 학생의 리포트, 결제 안내, 일정 요청 화면으로
+                  이동합니다.
                 </p>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowParentPicker(false)}>
