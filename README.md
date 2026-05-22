@@ -1,7 +1,7 @@
 # 🌞 Solar Tutorboard
 
 > **2026 제 3회 MixUp AI HACKATHON**  
-> **Track 1. [업스테이지] SOLAR PRO3를 활용한 Agent 개발 대회**  
+> - **Track 1. [업스테이지] SOLAR PRO3를 활용한 Agent 개발**  
 > - **Team 4**
 
 Solar Tutorboard는 과외 선생님의 수업 메모, 결제 상태, 일정 요청을 AI Agent가 분석해 학부모용 리포트와 안내 메시지로 자동 생성하는 서비스입니다.  
