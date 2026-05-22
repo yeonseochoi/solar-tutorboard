@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase, DEMO_TUTOR_ID } from "@/lib/supabase";
@@ -50,6 +50,7 @@ const emptyInviteForm = {
 
 function StudentsPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("all");
   const [paymentStatus, setPaymentStatus] = useState("all");
@@ -123,6 +124,10 @@ function StudentsPage() {
 
   const updateInviteForm = (key: keyof typeof emptyInviteForm, value: string) => {
     setInviteForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const openStudentDetail = (student_id: string) => {
+    navigate({ to: "/teacher/students/$studentId", params: { studentId: student_id } });
   };
 
   const createInvite = async () => {
@@ -262,7 +267,19 @@ function StudentsPage() {
                 </thead>
                 <tbody>
                   {rows.map(({ student, payment, latestReport, nextSchedule, pendingMessages }) => (
-                    <tr key={student.id} className="border-t hover:bg-muted/35">
+                    <tr
+                      key={student.id}
+                      role="link"
+                      tabIndex={0}
+                      className="cursor-pointer border-t transition-colors hover:bg-muted/35 focus-visible:bg-muted/35 focus-visible:outline-none"
+                      onClick={() => openStudentDetail(student.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          openStudentDetail(student.id);
+                        }
+                      }}
+                    >
                       <td className="px-4 py-3">
                         <div className="font-medium">{student.name}</div>
                         <div className="text-xs text-muted-foreground">
@@ -302,6 +319,7 @@ function StudentsPage() {
                           to="/teacher/students/$studentId"
                           params={{ studentId: student.id }}
                           className="inline-flex items-center text-xs font-medium text-primary hover:underline"
+                          onClick={(event) => event.stopPropagation()}
                         >
                           상세 <ChevronRight className="h-3 w-3" />
                         </Link>
