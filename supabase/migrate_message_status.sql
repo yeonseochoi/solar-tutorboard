@@ -27,8 +27,14 @@ alter table public.message_queue
   add constraint message_queue_message_status_check
   check (message_status in ('pending', 'sent'));
 
+alter table public.message_queue
+  drop constraint if exists message_queue_message_type_check;
+
+alter table public.message_queue
+  add constraint message_queue_message_type_check
+  check (message_type in ('lesson_report', 'payment_reminder', 'schedule_coordination'));
+
 drop index if exists public.message_queue_student_id_status_idx;
 
 create index if not exists message_queue_student_id_status_idx
   on public.message_queue(student_id, message_status);
-

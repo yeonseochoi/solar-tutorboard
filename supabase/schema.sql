@@ -50,7 +50,7 @@ create table if not exists public.message_queue (
   id uuid primary key default gen_random_uuid(),
   tutor_id uuid not null references public.tutors(id) on delete cascade,
   student_id uuid not null references public.students(id) on delete cascade,
-  message_type text not null check (message_type in ('lesson_report', 'payment_reminder')),
+  message_type text not null check (message_type in ('lesson_report', 'payment_reminder', 'schedule_coordination')),
   channel text not null,
   message_status text not null check (message_status in ('pending', 'sent')),
   message_body text not null,

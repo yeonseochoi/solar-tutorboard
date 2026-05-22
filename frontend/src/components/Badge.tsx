@@ -68,6 +68,7 @@ export function statusLabel(status: string) {
     cancelled: "취소",
     lesson_report: "수업 리포트",
     payment_reminder: "결제 안내",
+    schedule_coordination: "일정 조정",
   };
   return map[status] ?? status;
 }

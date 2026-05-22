@@ -15,8 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatDate } from "@/lib/types";
+import { formatDate, formatDateTime } from "@/lib/types";
 import type { Schedule, Student, ScheduleStatus } from "@/lib/types";
+import { build_message_queue_mock, coordinate_schedule } from "@/lib/agent";
 import { toast } from "sonner";
 import {
   CalendarDays,
@@ -49,6 +50,7 @@ function SchedulePage() {
     return d;
   });
   const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [agentBusy, setAgentBusy] = useState("");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["teacher", "schedules"],
@@ -166,6 +168,77 @@ function SchedulePage() {
     }
   };
 
+  const reviewWithAgent = async (schedule: Schedule) => {
+    const student = studentsById.get(schedule.student_id);
+    if (!student) {
+      toast.error("학생 정보를 찾을 수 없습니다");
+      return;
+    }
+
+    setAgentBusy(schedule.id);
+    try {
+      const availableTimes = (data?.schedules ?? [])
+        .filter((item) => item.student_id === schedule.student_id && item.status === "available")
+        .map((item) => formatDateTime(item.available_time || item.requested_time))
+        .filter(Boolean);
+
+      const result = await coordinate_schedule({
+        student_id: student.id,
+        student_name: student.name,
+        grade: student.grade,
+        subject: student.subject,
+        parent_name: student.parent_name,
+        schedule_id: schedule.id,
+        available_times: availableTimes,
+        requested_time: formatDateTime(schedule.requested_time || schedule.available_time),
+        current_status: schedule.status,
+      });
+
+      const updatePayload =
+        result.result.recommended_status === "approved" && result.result.matched_time
+          ? {
+              status: result.result.recommended_status,
+              available_time: toScheduleTimestamp(result.result.matched_time),
+            }
+          : { status: result.result.recommended_status };
+
+      if (result.result.should_update) {
+        const { error: uerr } = await supabase
+          .from("schedules")
+          .update(updatePayload)
+          .eq("id", schedule.id);
+        if (uerr) throw uerr;
+      }
+
+      const queue = await build_message_queue_mock({
+        tutor_id: DEMO_TUTOR_ID,
+        student_id: student.id,
+        message_type: "schedule_coordination",
+        message_body: result.result.message_body,
+      });
+      const message = queue.result.messages[0];
+      if (!message) throw new Error("message_queue Agent가 메시지를 반환하지 않았습니다.");
+
+      const { error: merr } = await supabase.from("message_queue").insert(message);
+      if (merr) throw merr;
+
+      toast.success(
+        result.result.recommended_status === "approved"
+          ? "AI가 일정 승인을 추천했습니다"
+          : "AI가 일정 거절 안내를 생성했습니다",
+        { description: result.result.reason },
+      );
+      qc.invalidateQueries({ queryKey: ["teacher", "schedules"] });
+      qc.invalidateQueries({ queryKey: ["teacher"] });
+    } catch (e) {
+      toast.error("AI 일정 검토 실패", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    } finally {
+      setAgentBusy("");
+    }
+  };
+
   const studentName = (id: string) => studentsById.get(id)?.name ?? "학생";
 
   return (
@@ -265,6 +338,8 @@ function SchedulePage() {
                     onApprove={() => setStatus(schedule.id, "approved")}
                     onReject={() => setStatus(schedule.id, "rejected")}
                     onCancel={() => setStatus(schedule.id, "cancelled")}
+                    onAgentReview={() => reviewWithAgent(schedule)}
+                    agentBusy={agentBusy === schedule.id}
                   />
                 ))}
               </div>
@@ -470,12 +545,16 @@ function AgendaItem({
   onApprove,
   onReject,
   onCancel,
+  onAgentReview,
+  agentBusy,
 }: {
   schedule: Schedule;
   student?: Student;
   onApprove: () => void;
   onReject: () => void;
   onCancel: () => void;
+  onAgentReview: () => void;
+  agentBusy: boolean;
 }) {
   const time = scheduleTime(schedule);
   const requested = schedule.status === "requested";
@@ -501,6 +580,9 @@ function AgendaItem({
         <div className="mt-3 flex flex-wrap justify-end gap-2">
           {requested && (
             <>
+              <Button size="sm" onClick={onAgentReview} disabled={agentBusy}>
+                {agentBusy ? "AI 검토 중" : "AI 일정 검토"}
+              </Button>
               <Button size="sm" variant="outline" onClick={onApprove}>
                 <Check className="h-4 w-4 text-[oklch(0.45_0.15_155)]" /> 승인
               </Button>
@@ -587,6 +669,13 @@ function formatTime(iso?: string) {
   const date = new Date(iso);
   if (isNaN(date.getTime())) return iso.slice(11, 16);
   return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function toScheduleTimestamp(value: string) {
+  if (!value) return value;
+  if (value.includes("T")) return value;
+  const parsed = new Date(value.replace(" ", "T"));
+  return isNaN(parsed.getTime()) ? value : parsed.toISOString();
 }
 
 function formatKoreanDate(dateKey: string) {

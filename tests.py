@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from ai_tutor_agents.agents import (
     build_message_queue,
+    coordinate_schedule,
     create_tutor_profile,
     generate_lesson_report,
     generate_payment_reminder,
@@ -28,7 +29,7 @@ def test_lesson_report_cases() -> None:
     profile = create_tutor_profile({"teacher": TEACHER})
 
     cases = [
-        "오늘 이차함수 최대최소 수업. 숙제 잘 완료. 개념 안정적.",
+        "오늘 이차함수 최대최소 수업. 숙제 전부 완료. 개념 안정적.",
         "오늘 지수함수 그래프 이동 수업. 로그 개념 헷갈려함. 숙제 15문제 중 9문제 완료. 계산 실수 많음.",
         "오늘 수열 기본 유형 수업. 숙제 미완. 최근 자신감이 떨어져 보여 쉬운 문제부터 다시 정리함.",
     ]
@@ -86,6 +87,38 @@ def test_payment_cases() -> None:
     assert paid["result"]["message_body"] == ""
 
 
+def test_schedule_coordination_cases() -> None:
+    approved = coordinate_schedule(
+        {
+            "student": STUDENT,
+            "schedule_request": {
+                "schedule_id": "SCH001",
+                "available_times": ["2026-05-24 19:00", "2026-05-25 20:00"],
+                "requested_time": "2026-05-24 19:00",
+                "current_status": "requested",
+            },
+        }
+    )
+    rejected = coordinate_schedule(
+        {
+            "student": STUDENT,
+            "schedule_request": {
+                "schedule_id": "SCH002",
+                "available_times": ["2026-05-24 19:00"],
+                "requested_time": "2026-05-26 19:00",
+                "current_status": "requested",
+            },
+        }
+    )
+
+    assert approved["success"] is True
+    assert approved["agent_type"] == "schedule_coordination"
+    assert approved["result"]["recommended_status"] == "approved"
+    assert approved["result"]["matched_time"] == "2026-05-24 19:00"
+    assert rejected["result"]["recommended_status"] == "rejected"
+    assert rejected["result"]["message_body"]
+
+
 def test_message_queue() -> None:
     queue = build_message_queue(
         {
@@ -117,6 +150,6 @@ def test_message_queue() -> None:
 if __name__ == "__main__":
     test_lesson_report_cases()
     test_payment_cases()
+    test_schedule_coordination_cases()
     test_message_queue()
     print("All tests passed.")
-

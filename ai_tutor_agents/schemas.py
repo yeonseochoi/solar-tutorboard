@@ -6,6 +6,7 @@ from typing import Any
 PAYMENT_STATUS_VALUES = ["paid", "unpaid"]
 URGENCY_VALUES = ["low", "normal", "high"]
 MESSAGE_STATUS_VALUES = ["pending", "sent"]
+SCHEDULE_STATUS_VALUES = ["available", "requested", "approved", "rejected", "cancelled"]
 
 
 STUDENT_SCHEMA: dict[str, Any] = {
@@ -110,9 +111,31 @@ MESSAGE_SCHEMA: dict[str, Any] = {
     "properties": {
         "student_id": {"type": "string"},
         "student_name": {"type": "string"},
-        "message_type": {"type": "string", "enum": ["lesson_report", "payment_reminder"]},
+        "message_type": {
+            "type": "string",
+            "enum": ["lesson_report", "payment_reminder", "schedule_coordination"],
+        },
         "channel": {"type": "string"},
         "message_status": {"type": "string", "enum": MESSAGE_STATUS_VALUES},
+        "message_body": {"type": "string"},
+    },
+}
+
+
+SCHEDULE_COORDINATION_RESULT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "required": [
+        "should_update",
+        "recommended_status",
+        "matched_time",
+        "reason",
+        "message_body",
+    ],
+    "properties": {
+        "should_update": {"type": "boolean"},
+        "recommended_status": {"type": "string", "enum": SCHEDULE_STATUS_VALUES},
+        "matched_time": {"type": "string"},
+        "reason": {"type": "string"},
         "message_body": {"type": "string"},
     },
 }
@@ -134,4 +157,8 @@ TUTOR_PROFILE_SCHEMA = common_response_schema("tutor_profile", TUTOR_PROFILE_RES
 LESSON_REPORT_SCHEMA = common_response_schema("lesson_report", LESSON_REPORT_RESULT_SCHEMA)
 PAYMENT_REMINDER_SCHEMA = common_response_schema("payment_reminder", PAYMENT_REMINDER_RESULT_SCHEMA)
 MESSAGE_QUEUE_SCHEMA = common_response_schema("message_queue", MESSAGE_QUEUE_RESULT_SCHEMA)
+SCHEDULE_COORDINATION_SCHEMA = common_response_schema(
+    "schedule_coordination",
+    SCHEDULE_COORDINATION_RESULT_SCHEMA,
+)
 

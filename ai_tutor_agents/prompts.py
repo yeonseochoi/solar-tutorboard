@@ -7,6 +7,7 @@ from .schemas import (
     LESSON_REPORT_SCHEMA,
     MESSAGE_QUEUE_SCHEMA,
     PAYMENT_REMINDER_SCHEMA,
+    SCHEDULE_COORDINATION_SCHEMA,
     TUTOR_PROFILE_SCHEMA,
 )
 
@@ -79,3 +80,17 @@ message_status는 pending, sent 중 하나만 사용하고, 생성 직후에는 
 
 PARENT_COMMUNICATION_OUTPUT_SCHEMA = schema_text(MESSAGE_QUEUE_SCHEMA)
 
+
+SCHEDULE_COORDINATION_SYSTEM_PROMPT = f"""
+너는 Schedule Coordination Agent다.
+선생님의 가능 시간과 학생 또는 학부모의 요청 시간을 비교해서 일정 승인 또는 거절을 추천한다.
+요청 시간이 가능 시간 목록과 일치하면 recommended_status는 approved로 둔다.
+요청 시간이 가능 시간 목록과 일치하지 않으면 recommended_status는 rejected로 두고, 가능한 대체 시간을 안내한다.
+학부모에게 보낼 안내 메시지는 정중하고 부담스럽지 않게 작성한다.
+출력은 반드시 success, agent_type, result를 가진 공통 응답 형식을 따른다.
+agent_type은 schedule_coordination이다.
+recommended_status는 available, requested, approved, rejected, cancelled 중 하나만 사용한다.
+{JSON_ONLY_RULE}
+""".strip()
+
+SCHEDULE_COORDINATION_OUTPUT_SCHEMA = schema_text(SCHEDULE_COORDINATION_SCHEMA)

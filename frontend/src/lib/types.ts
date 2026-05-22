@@ -37,7 +37,7 @@ export type Payment = {
 };
 
 export type MessageStatus = "pending" | "sent";
-export type MessageType = "lesson_report" | "payment_reminder";
+export type MessageType = "lesson_report" | "payment_reminder" | "schedule_coordination";
 
 export type MessageQueue = {
   id: string;

@@ -9,7 +9,11 @@ from typing import Any
 from uuid import uuid4
 
 from ai_tutor_agents.agent_utils import agent_response
-from ai_tutor_agents.agents import generate_lesson_report, generate_payment_reminder
+from ai_tutor_agents.agents import (
+    coordinate_schedule,
+    generate_lesson_report,
+    generate_payment_reminder,
+)
 from ai_tutor_agents.env import load_env
 from ai_tutor_agents.llm import LLMClient, SolarProClient
 
@@ -63,10 +67,30 @@ def _payment_agent_input(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _schedule_agent_input(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "student": {
+            "student_id": _text(payload.get("student_id")),
+            "student_name": _text(payload.get("student_name")),
+            "grade": _text(payload.get("grade")),
+            "subject": _text(payload.get("subject")),
+            "parent_name": _text(payload.get("parent_name")),
+        },
+        "schedule_request": {
+            "schedule_id": _text(payload.get("schedule_id")),
+            "available_times": payload.get("available_times") or [],
+            "requested_time": _text(payload.get("requested_time")),
+            "current_status": _text(payload.get("current_status") or "requested"),
+        },
+    }
+
+
 def _message_queue_response(payload: dict[str, Any]) -> dict[str, Any]:
     message_type = _text(payload.get("message_type"))
-    if message_type not in {"lesson_report", "payment_reminder"}:
-        raise ValueError("message_type must be lesson_report or payment_reminder")
+    if message_type not in {"lesson_report", "payment_reminder", "schedule_coordination"}:
+        raise ValueError(
+            "message_type must be lesson_report, payment_reminder, or schedule_coordination"
+        )
 
     return agent_response(
         "message_queue",
@@ -130,6 +154,8 @@ class AgentApiHandler(BaseHTTPRequestHandler):
                 result = generate_lesson_report(_lesson_agent_input(payload), llm=self.llm)
             elif path == "/payment_reminder":
                 result = generate_payment_reminder(_payment_agent_input(payload), llm=self.llm)
+            elif path == "/schedule_coordination":
+                result = coordinate_schedule(_schedule_agent_input(payload), llm=self.llm)
             elif path == "/message_queue":
                 result = _message_queue_response(payload)
             else:
