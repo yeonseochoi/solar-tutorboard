@@ -22,20 +22,20 @@ class LLMClient(ABC):
 class SolarProClient(LLMClient):
     """Minimal OpenAI-compatible client for Solar models.
 
-    Set these environment variables before running:
+    Set these values in .env or environment variables before running:
     - SOLAR_API_KEY
     - SOLAR_MODEL, optional, default: solar-pro3
-    - SOLAR_BASE_URL, optional, default: https://api.upstage.ai/v1/solar/chat/completions
+    - SOLAR_BASE_URL, optional, default: https://api.upstage.ai/v1/chat/completions
     """
 
     def __init__(self) -> None:
         self.api_key = os.environ.get("SOLAR_API_KEY")
         if not self.api_key:
-            raise RuntimeError("SOLAR_API_KEY 환경변수가 없습니다.")
+            raise RuntimeError("SOLAR_API_KEY 환경변수가 없습니다. .env 파일을 확인하세요.")
         self.model = os.environ.get("SOLAR_MODEL", "solar-pro3")
         self.base_url = os.environ.get(
             "SOLAR_BASE_URL",
-            "https://api.upstage.ai/v1/solar/chat/completions",
+            "https://api.upstage.ai/v1/chat/completions",
         )
 
     def generate_json(
