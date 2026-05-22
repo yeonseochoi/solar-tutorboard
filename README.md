@@ -106,6 +106,32 @@ SOLAR_BASE_URL=https://api.upstage.ai/v1/chat/completions
 python demo.py --solar
 ```
 
+## Run Agent API For Frontend
+
+`frontend2`는 기본적으로 로컬 Python Agent API를 호출합니다.
+
+```bash
+python3 agent_api.py --host 127.0.0.1 --port 8000
+```
+
+Solar API를 실제로 사용하려면 `.env`에 `SOLAR_API_KEY`를 넣고 아래처럼 실행합니다.
+
+```bash
+python3 agent_api.py --host 127.0.0.1 --port 8000 --solar
+```
+
+프론트에서 다른 Agent API 주소를 쓰려면 `frontend2/.env`에 아래 값을 설정합니다.
+
+```env
+VITE_AGENT_API_URL=http://127.0.0.1:8000
+```
+
+mock으로 되돌리고 싶을 때만 아래 값을 추가합니다.
+
+```env
+VITE_AGENT_USE_MOCK=true
+```
+
 PowerShell에서 환경변수를 직접 넣어도 됩니다.
 
 ```powershell

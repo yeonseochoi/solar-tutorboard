@@ -2,6 +2,7 @@
 __pycache__/
 *.py[codz]
 *$py.class
+.DS_Store
 
 # C extensions
 *.so
@@ -18,6 +19,8 @@ lib/
 lib64/
 !frontend/src/lib/
 !frontend/src/lib/**
+!frontend2/src/lib/
+!frontend2/src/lib/**
 parts/
 sdist/
 var/
