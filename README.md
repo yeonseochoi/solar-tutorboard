@@ -106,6 +106,16 @@ SOLAR_BASE_URL=https://api.upstage.ai/v1/chat/completions
 python demo.py --solar
 ```
 
+## Frontend
+
+최종 프론트엔드는 `frontend2`입니다. 기존 `frontend` 폴더는 혼선을 줄이기 위해 제거했습니다.
+
+```bash
+cd frontend2
+npm install
+npm run dev -- --host 127.0.0.1 --port 5174
+```
+
 ## Run Agent API For Frontend
 
 `frontend2`는 기본적으로 로컬 Python Agent API를 호출합니다.
