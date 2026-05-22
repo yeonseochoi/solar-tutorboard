@@ -246,45 +246,6 @@ message_type: lesson_report, payment_reminder, schedule_coordination
 
 ---
 
-## 🧩 주요 파일 역할
-
-### Python
-
-- `demo.py`: 터미널에서 전체 Agent 파이프라인을 실행하는 데모 파일
-- `agent_api.py`: 프론트엔드가 호출하는 로컬 Python Agent API 서버
-- `tests.py`: Agent별 기본 테스트 케이스
-- `ai_tutor_agents/agent_utils.py`: 공통 응답 형식 생성 유틸
-- `ai_tutor_agents/agents.py`: 각 Agent 함수를 한 곳에서 export하는 진입점
-- `ai_tutor_agents/env.py`: `.env` 파일 로더
-- `ai_tutor_agents/llm.py`: Solar API 호출 클라이언트
-- `ai_tutor_agents/prompts.py`: Agent별 system prompt와 output schema 정의
-- `ai_tutor_agents/schemas.py`: JSON schema와 enum 정의
-- `ai_tutor_agents/pipeline.py`: Agent들을 순서대로 연결하는 파이프라인
-
-### Frontend
-
-- `frontend/src/lib/agent.ts`: 프론트에서 Python Agent API를 호출하는 함수 모음
-- `frontend/src/lib/supabase.ts`: Supabase client와 데모 ID 정의
-- `frontend/src/lib/types.ts`: 공통 타입 정의
-- `frontend/src/routes/teacher.index.tsx`: 선생님 대시보드
-- `frontend/src/routes/teacher.lesson-report.tsx`: 수업 리포트 생성 화면
-- `frontend/src/routes/teacher.payments.tsx`: 결제 관리 화면
-- `frontend/src/routes/teacher.schedule.tsx`: 일정 관리 및 AI 일정 검토 화면
-- `frontend/src/routes/teacher.messages.tsx`: 메시지 큐 확인 화면
-- `frontend/src/routes/parent.index.tsx`: 학부모 대시보드
-- `frontend/src/routes/parent.reports.tsx`: 학부모 리포트 확인 화면
-- `frontend/src/routes/parent.schedule.tsx`: 학부모 일정 변경 요청 화면
-
-### Supabase
-
-- `supabase/schema.sql`: DB 테이블과 인덱스 생성
-- `supabase/seed.sql`: 시연용 seed 데이터 삽입
-- `supabase/demo_access.sql`: 데모용 접근 권한 설정
-- `supabase/verify.sql`: seed 데이터 검증 쿼리
-- `supabase/migrate_message_status.sql`: 기존 DB 제약조건과 컬럼명을 최신 구조로 보정
-
----
-
 ## 🗄️ DB 테이블
 
 - `tutors`: 과외 선생님 정보
@@ -463,22 +424,3 @@ npm run build
 
 ---
 
-## 🔐 GitHub 업로드 주의사항
-
-실제 API 키가 들어 있는 파일은 올리지 않습니다.
-
-- `.env`
-- `frontend/.env.local`
-
-공유용 예시는 아래 파일만 올립니다.
-
-- `.env.example`
-- `frontend/.env.example`
-
----
-
-## 🏷️ 추천 커밋 메시지
-
-```text
-docs: polish readme for hackathon submission
-```
