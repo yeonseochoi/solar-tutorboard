@@ -63,7 +63,7 @@ export function AppLayout({
     to === `/${variant}` ? pathname === to : pathname.startsWith(to);
 
   const Sidebar = (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground">
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2 px-5 py-5 border-b">
         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <GraduationCap className="h-4 w-4" />
@@ -75,7 +75,7 @@ export function AppLayout({
           </div>
         </div>
       </div>
-      <nav className="flex-1 px-2 py-3 space-y-0.5">
+      <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
         {nav.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.to);
@@ -97,7 +97,7 @@ export function AppLayout({
           );
         })}
       </nav>
-      <div className="border-t p-3 space-y-2">
+      <div className="mt-auto shrink-0 space-y-2 border-t p-3">
         <div className="flex items-center gap-2 px-2 py-1.5 text-xs">
           <User className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-muted-foreground">
