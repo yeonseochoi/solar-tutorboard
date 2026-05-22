@@ -40,12 +40,12 @@ export const Route = createFileRoute("/teacher/students/")({
   component: StudentsPage,
 });
 
-const emptyInviteForm = {
-  student_name: "",
-  grade: "",
-  subject: "",
-  parent_name: "",
-  parent_contact: "",
+const demoInviteForm = {
+  student_name: "최지우",
+  grade: "고1",
+  subject: "수학",
+  parent_name: "최지우 학부모님",
+  parent_contact: "kjs201105@gmail.com",
 };
 
 function StudentsPage() {
@@ -55,7 +55,7 @@ function StudentsPage() {
   const [subject, setSubject] = useState("all");
   const [paymentStatus, setPaymentStatus] = useState("all");
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteForm, setInviteForm] = useState(emptyInviteForm);
+  const [inviteForm, setInviteForm] = useState(demoInviteForm);
   const [creatingInvite, setCreatingInvite] = useState(false);
 
   const { data, isLoading, error } = useQuery({
@@ -122,8 +122,13 @@ function StudentsPage() {
       });
   }, [data, paymentStatus, query, subject]);
 
-  const updateInviteForm = (key: keyof typeof emptyInviteForm, value: string) => {
+  const updateInviteForm = (key: keyof typeof demoInviteForm, value: string) => {
     setInviteForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const openInviteDialog = () => {
+    setInviteForm({ ...demoInviteForm });
+    setInviteOpen(true);
   };
 
   const openStudentDetail = (student_id: string) => {
@@ -183,7 +188,7 @@ function StudentsPage() {
       toast.success("학생 초대 메일을 보냈습니다", {
         description: `${parent_contact} 주소로 로그인 링크가 발송되었습니다.`,
       });
-      setInviteForm({ ...emptyInviteForm });
+      setInviteForm({ ...demoInviteForm });
       setInviteOpen(false);
       await qc.invalidateQueries({ queryKey: ["teacher"] });
     } catch (e) {
@@ -201,7 +206,7 @@ function StudentsPage() {
         title="학생 목록"
         description="학생을 클릭하면 상세 관리 화면으로 이동합니다."
         actions={
-          <Button size="sm" variant="outline" onClick={() => setInviteOpen(true)}>
+          <Button size="sm" variant="outline" onClick={openInviteDialog}>
             <UserPlus className="h-4 w-4" /> 학생 추가
           </Button>
         }
