@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 
-PAYMENT_STATUS_VALUES = ["paid", "unpaid", "pending"]
+PAYMENT_STATUS_VALUES = ["paid", "unpaid"]
 URGENCY_VALUES = ["low", "normal", "high"]
-MESSAGE_STATUS_VALUES = ["pending", "sent", "failed"]
+MESSAGE_STATUS_VALUES = ["pending", "sent"]
 
 
 STUDENT_SCHEMA: dict[str, Any] = {

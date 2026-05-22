@@ -59,6 +59,7 @@ PAYMENT_REMINDER_SYSTEM_PROMPT = f"""
 결제가 완료된 경우 should_send는 false로 둔다.
 출력은 반드시 success, agent_type, result를 가진 공통 응답 형식을 따른다.
 agent_type은 payment_reminder이다.
+payment_status는 paid, unpaid 중 하나만 사용한다.
 urgency는 low, normal, high 중 하나만 사용한다.
 {JSON_ONLY_RULE}
 """.strip()
@@ -72,7 +73,7 @@ PARENT_COMMUNICATION_SYSTEM_PROMPT = f"""
 수업 리포트는 항상 포함하고, 결제 안내는 should_send가 true일 때만 포함한다.
 출력은 반드시 success, agent_type, result를 가진 공통 응답 형식을 따른다.
 agent_type은 message_queue이다.
-message_status는 pending, sent, failed 중 하나만 사용하고, 생성 직후에는 pending을 사용한다.
+message_status는 pending, sent 중 하나만 사용하고, 생성 직후에는 pending을 사용한다.
 {JSON_ONLY_RULE}
 """.strip()
 

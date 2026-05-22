@@ -18,7 +18,7 @@ def generate_payment_reminder(input_data: dict[str, Any], llm: LLMClient | None 
 
     payment = input_data.get("payment", input_data)
     student = input_data.get("student", {})
-    payment_status = payment.get("payment_status", "pending")
+    payment_status = payment.get("payment_status", "unpaid")
 
     if payment_status == "paid":
         return agent_response(

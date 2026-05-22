@@ -29,9 +29,9 @@
 
 Enum:
 
-- `payment_status`: `paid`, `unpaid`, `pending`
+- `payment_status`: `paid`, `unpaid`
 - `urgency`: `low`, `normal`, `high`
-- `message_status`: `pending`, `sent`, `failed`
+- `message_status`: `pending`, `sent`
 
 
 
