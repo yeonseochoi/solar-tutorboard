@@ -8,15 +8,24 @@ from ai_tutor_agents.agents import (
 )
 
 
+STUDENT = {
+    "student_id": "S001",
+    "student_name": "김서윤",
+    "grade": "고1",
+    "subject": "수학",
+    "parent_name": "김서윤 학부모님",
+}
+
+TEACHER = {
+    "teacher_id": "T001",
+    "teacher_name": "우은비",
+    "teaching_style": "꼼꼼한 개념 설명형",
+    "parent_tone": "정중하지만 부담스럽지 않게",
+}
+
+
 def test_lesson_report_cases() -> None:
-    profile = create_tutor_profile(
-        {
-            "subject": "고등 수학",
-            "teaching_style": "꼼꼼하게 개념을 잡아주는 스타일",
-            "payment_policy": "월 4회 선결제",
-            "parent_tone": "정중하지만 부담스럽지 않게",
-        }
-    )["agent_profile"]
+    profile = create_tutor_profile({"teacher": TEACHER})
 
     cases = [
         "오늘 이차함수 최대최소 수업. 숙제 잘 완료. 개념 안정적.",
@@ -24,71 +33,85 @@ def test_lesson_report_cases() -> None:
         "오늘 수열 기본 유형 수업. 숙제 미완. 최근 자신감이 떨어져 보여 쉬운 문제부터 다시 정리함.",
     ]
 
-    for memo in cases:
+    for index, memo in enumerate(cases, start=1):
         result = generate_lesson_report(
             {
-                "student": {"name": "김서윤", "grade": "고1", "subject": "수학"},
-                "lesson_memo": memo,
-                "agent_profile": profile,
+                "student": STUDENT,
+                "lesson_log": {
+                    "lesson_id": f"L00{index}",
+                    "lesson_date": "2026-05-23",
+                    "raw_memo": memo,
+                },
+                "agent_profile": profile["result"],
             }
         )
-        assert result["parent_report"]
-        assert result["next_plan"]
+        assert result["success"] is True
+        assert result["agent_type"] == "lesson_report"
+        assert result["result"]["parent_report"]
+        assert result["result"]["next_plan"]
 
 
 def test_payment_cases() -> None:
-    profile = create_tutor_profile(
-        {
-            "subject": "중등 영어",
-            "teaching_style": "차분하게 약점을 정리하는 스타일",
-            "payment_policy": "월 4회 선결제",
-            "parent_tone": "정중하지만 부담스럽지 않게",
-        }
-    )["agent_profile"]
+    profile = create_tutor_profile({"teacher": TEACHER})
 
     unpaid = generate_payment_reminder(
         {
-            "student_name": "박민준",
-            "parent_name": "박민준 학부모님",
-            "payment_status": "unpaid",
-            "payment_due_date": "2026-05-24",
-            "amount": 280000,
-            "class_count": 4,
-            "next_class": "2026-05-24 18:00",
-            "agent_profile": profile,
+            "student": STUDENT,
+            "payment": {
+                "payment_status": "unpaid",
+                "payment_due_date": "2026-05-24",
+                "amount": 280000,
+                "class_count": 4,
+                "next_class": "2026-05-24 18:00",
+            },
+            "agent_profile": profile["result"],
         }
     )
     paid = generate_payment_reminder(
         {
-            "student_name": "박민준",
-            "parent_name": "박민준 학부모님",
-            "payment_status": "paid",
-            "payment_due_date": "2026-05-24",
-            "amount": 280000,
-            "class_count": 4,
-            "next_class": "2026-05-24 18:00",
-            "agent_profile": profile,
+            "student": STUDENT,
+            "payment": {
+                "payment_status": "paid",
+                "payment_due_date": "2026-05-24",
+                "amount": 280000,
+                "class_count": 4,
+                "next_class": "2026-05-24 18:00",
+            },
+            "agent_profile": profile["result"],
         }
     )
-    assert unpaid["should_send"] is True
-    assert paid["should_send"] is False
+    assert unpaid["result"]["should_send"] is True
+    assert unpaid["result"]["urgency"] in {"low", "normal", "high"}
+    assert paid["result"]["should_send"] is False
+    assert paid["result"]["message_body"] == ""
 
 
 def test_message_queue() -> None:
     queue = build_message_queue(
         {
-            "report_result": {"parent_report": "오늘 수업 리포트입니다."},
-            "payment_result": {
-                "should_send": True,
-                "message_body": "결제 안내입니다.",
+            "report_result": {
+                "success": True,
+                "agent_type": "lesson_report",
+                "result": {"parent_report": "오늘 수업 리포트입니다."},
             },
-            "student_context": {"name": "김서윤"},
+            "payment_result": {
+                "success": True,
+                "agent_type": "payment_reminder",
+                "result": {
+                    "should_send": True,
+                    "urgency": "normal",
+                    "message_body": "결제 안내입니다.",
+                },
+            },
+            "student": STUDENT,
             "send_channel": "email_mock",
         }
     )
-    assert len(queue["message_queue"]) == 2
-    assert queue["message_queue"][0]["message_type"] == "lesson_report"
-    assert queue["message_queue"][1]["message_type"] == "payment_reminder"
+    assert queue["success"] is True
+    assert queue["agent_type"] == "message_queue"
+    assert len(queue["result"]["messages"]) == 2
+    assert queue["result"]["messages"][0]["message_type"] == "lesson_report"
+    assert queue["result"]["messages"][1]["message_status"] == "pending"
 
 
 if __name__ == "__main__":

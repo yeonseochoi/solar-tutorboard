@@ -3,14 +3,72 @@
 과외 선생님의 짧은 수업 메모를 학부모용 리포트와 결제 안내 메시지로 바꾸는 Python AI Agent 파이프라인입니다.
 웹 백엔드 없이 터미널에서 먼저 검증할 수 있도록 구성했습니다.
 
-## Agent Structure
+## Shared Schema v1
 
-1. `Tutor Profile Agent`
-2. `Lesson Report Agent`
-3. `Payment Reminder Agent`
-4. `Parent Communication Agent / Orchestrator`
+모든 필드명은 `snake_case`만 사용합니다.
 
-최종 결과는 UI, DB, 메일 발송 모듈에 넘기기 쉬운 `message_queue` JSON입니다.
+모든 Agent 출력은 아래 공통 구조를 따릅니다.
+
+```json
+{
+  "success": true,
+  "agent_type": "",
+  "result": {}
+}
+```
+
+`null`은 사용하지 않습니다.
+
+- 문자열 값이 없으면 `""`
+- 배열 값이 없으면 `[]`
+
+날짜 형식:
+
+- 날짜: `YYYY-MM-DD`
+- 날짜 + 시간: `YYYY-MM-DD HH:MM`
+
+Enum:
+
+- `payment_status`: `paid`, `unpaid`, `pending`
+- `urgency`: `low`, `normal`, `high`
+- `message_status`: `pending`, `sent`, `failed`
+
+
+
+## Common Input Schemas
+
+### Student
+
+```json
+{
+  "student_id": "S001",
+  "student_name": "김서윤",
+  "grade": "고1",
+  "subject": "수학",
+  "parent_name": "김서윤 학부모님"
+}
+```
+
+### Teacher
+
+```json
+{
+  "teacher_id": "T001",
+  "teacher_name": "우은비",
+  "teaching_style": "꼼꼼한 개념 설명형",
+  "parent_tone": "정중하지만 부담스럽지 않게"
+}
+```
+
+### Lesson Log
+
+```json
+{
+  "lesson_id": "L001",
+  "lesson_date": "2026-05-23",
+  "raw_memo": "로그 개념 헷갈려함..."
+}
+```
 
 ## Run Without API
 
@@ -30,12 +88,6 @@ python tests.py
 
 먼저 `.env.example`을 복사해서 `.env` 파일을 만듭니다.
 
-```bash
-cp .env.example .env
-```
-
-Windows PowerShell에서는 직접 파일을 복사해도 되고, 아래 명령을 써도 됩니다.
-
 ```powershell
 Copy-Item .env.example .env
 ```
@@ -53,29 +105,4 @@ SOLAR_BASE_URL=https://api.upstage.ai/v1/chat/completions
 ```bash
 python demo.py --solar
 ```
-
-PowerShell에서 환경변수를 직접 넣어도 됩니다.
-
-```powershell
-$env:SOLAR_API_KEY="your_api_key"
-python demo.py --solar
-```
-
-## Files
-
-- `ai_tutor_agents/prompts.py`: Agent별 system prompt와 output schema
-- `ai_tutor_agents/schemas.py`: 고정 JSON schema 이름
-- `ai_tutor_agents/agents.py`: 각 Agent 호출 함수
-- `ai_tutor_agents/llm.py`: Solar API 호출 코드
-- `ai_tutor_agents/env.py`: `.env` 파일 로더
-- `ai_tutor_agents/pipeline.py`: 전체 Agent 연결 흐름
-- `demo.py`: 시연용 입력 데이터
-- `tests.py`: Agent별 테스트 케이스
-
-## Fixed JSON Names
-
-- `agent_profile`
-- `lesson_report`
-- `payment_reminder`
-- `message_queue`
 
