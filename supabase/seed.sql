@@ -118,7 +118,7 @@ insert into public.message_queue (
   student_id,
   message_type,
   channel,
-  status,
+  message_status,
   message_body,
   created_at
 ) values
@@ -146,7 +146,7 @@ insert into public.message_queue (
   student_id = excluded.student_id,
   message_type = excluded.message_type,
   channel = excluded.channel,
-  status = excluded.status,
+  message_status = excluded.message_status,
   message_body = excluded.message_body,
   created_at = excluded.created_at;
 
@@ -306,7 +306,7 @@ insert into public.message_queue (
   student_id,
   message_type,
   channel,
-  status,
+  message_status,
   message_body,
   created_at
 ) values
@@ -344,7 +344,7 @@ insert into public.message_queue (
   student_id = excluded.student_id,
   message_type = excluded.message_type,
   channel = excluded.channel,
-  status = excluded.status,
+  message_status = excluded.message_status,
   message_body = excluded.message_body,
   created_at = excluded.created_at;
 

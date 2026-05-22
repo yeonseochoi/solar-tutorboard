@@ -52,7 +52,7 @@ create table if not exists public.message_queue (
   student_id uuid not null references public.students(id) on delete cascade,
   message_type text not null check (message_type in ('lesson_report', 'payment_reminder')),
   channel text not null,
-  status text not null check (status in ('pending', 'sent', 'skipped')),
+  message_status text not null check (message_status in ('pending', 'sent')),
   message_body text not null,
   created_at timestamptz not null default now()
 );
@@ -70,5 +70,5 @@ create table if not exists public.schedules (
 create index if not exists students_tutor_id_idx on public.students(tutor_id);
 create index if not exists lesson_reports_student_id_created_at_idx on public.lesson_reports(student_id, created_at desc);
 create index if not exists payments_student_id_due_date_idx on public.payments(student_id, payment_due_date);
-create index if not exists message_queue_student_id_status_idx on public.message_queue(student_id, status);
+create index if not exists message_queue_student_id_status_idx on public.message_queue(student_id, message_status);
 create index if not exists schedules_student_id_status_idx on public.schedules(student_id, status);
