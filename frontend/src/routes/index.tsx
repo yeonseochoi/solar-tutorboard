@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRole } from "@/lib/role";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Users, ArrowRight, Sparkles, Database } from "lucide-react";
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/")({
 function RoleSelect() {
   const { setRole } = useRole();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [seeding, setSeeding] = useState(false);
 
   const choose = (role: "teacher" | "parent") => {
@@ -24,7 +26,8 @@ function RoleSelect() {
     setSeeding(true);
     try {
       await ensureDemoData();
-      toast.success("데모 데이터가 준비되었습니다");
+      await queryClient.invalidateQueries();
+      toast.success("데모 데이터가 초기화되었습니다");
     } catch (e) {
       toast.error("데모 데이터 생성 실패", {
         description: e instanceof Error ? e.message : String(e),
